@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<!-- saved from url=(0033)http://localhost:8000/jarvis.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>J.A.R.V.I.S.</title>
+<link rel="icon" type="image/png" href="jarvis-icon-192.png">
+<link rel="apple-touch-icon" href="jarvis-icon-192.png">
+<link rel="manifest" href="manifest.json">
+<link href="./J.A.R.V.I.S._files/css2" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#050B14;
+    --bg-1:#0A1628;
+    --panel:#0D1B2E;
+    --line:#1C2E45;
+    --cyan:#00D2FF;
+    --crimson:#FF3864;
+    --amber:#FFB000;
+    --text-dim:#5B7A99;
+    --text:#CFE8FF;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse at 50% -10%, rgba(0,210,255,0.08), transparent 55%),
+      linear-gradient(180deg, var(--bg-0), var(--bg-1));
+    color:var(--text);
+    font-family:'JetBrains Mono', monospace;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(rgba(0,210,255,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,210,255,0.035) 1px, transparent 1px);
+    background-size:42px 42px;
+    pointer-events:none;
+    mask-image:radial-gradient(ellipse at 50% 30%, black 0%, transparent 70%);
+  }
+  .console{
+    position:relative;
+    width:100%;
+    max-width:480px;
+    background:linear-gradient(180deg, rgba(13,27,46,0.9), rgba(10,22,40,0.9));
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:28px 26px 24px;
+    box-shadow:0 0 0 1px rgba(0,210,255,0.04), 0 30px 60px -20px rgba(0,0,0,0.6);
+  }
+  .console::before,.console::after,
+  .corner-tl,.corner-br{
+    content:"";
+    position:absolute;
+    width:14px;height:14px;
+    border-color:var(--cyan);
+    opacity:0.6;
+  }
+  .corner-tl{top:-1px;left:-1px;border-top:2px solid var(--cyan);border-left:2px solid var(--cyan);}
+  .corner-br{bottom:-1px;right:-1px;border-bottom:2px solid var(--cyan);border-right:2px solid var(--cyan);}
+
+  .eyebrow{
+    font-family:'Orbitron',sans-serif;
+    font-size:10px;
+    letter-spacing:3px;
+    color:var(--text-dim);
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:6px;
+  }
+  h1{
+    font-family:'Orbitron',sans-serif;
+    font-weight:900;
+    font-size:22px;
+    letter-spacing:4px;
+    margin:0 0 18px;
+    color:var(--text);
+    text-shadow:0 0 18px rgba(0,210,255,0.35);
+  }
+  #status{
+    font-family:'Orbitron',sans-serif;
+    font-size:11px;
+    letter-spacing:2px;
+    text-align:center;
+    padding:8px 0;
+    margin-bottom:18px;
+    color:var(--cyan);
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+    transition:color .25s ease;
+  }
+
+  .reactor-wrap{
+    display:flex;
+    justify-content:center;
+    margin:6px 0 22px;
+  }
+  .reactor{
+    position:relative;
+    width:180px;height:180px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .reactor svg{position:absolute;inset:0;width:100%;height:100%;}
+  .ring-outer{
+    transform-origin:50% 50%;
+    animation:spin 14s linear infinite;
+  }
+  .ring-inner{
+    transform-origin:50% 50%;
+    animation:spin 9s linear infinite reverse;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .core{
+    position:relative;
+    width:64px;height:64px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #eafcff, var(--cyan) 55%, #063142 100%);
+    box-shadow:0 0 24px 4px var(--cyan), 0 0 60px 10px rgba(0,210,255,0.35);
+    animation:pulse 2.2s ease-in-out infinite;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Orbitron',sans-serif;
+    font-size:9px;
+    letter-spacing:1px;
+    color:#03151e;
+    font-weight:700;
+    text-align:center;
+    transition:background .25s ease, box-shadow .25s ease;
+  }
+  @keyframes pulse{
+    0%,100%{transform:scale(1);}
+    50%{transform:scale(1.06);}
+  }
+  .reactor.listening .core{
+    background:radial-gradient(circle at 35% 30%, #fff0f4, var(--crimson) 55%, #3a0512 100%);
+    box-shadow:0 0 24px 4px var(--crimson), 0 0 60px 10px rgba(255,56,100,0.4);
+  }
+  .reactor.processing .core{
+    background:radial-gradient(circle at 35% 30%, #fff8e6, var(--amber) 55%, #3a2600 100%);
+    box-shadow:0 0 24px 4px var(--amber), 0 0 60px 10px rgba(255,176,0,0.4);
+  }
+
+  #transcript{
+    text-align:center;
+    font-size:12.5px;
+    color:var(--text-dim);
+    font-style:italic;
+    min-height:18px;
+    margin-bottom:18px;
+    padding:0 8px;
+  }
+
+  .type-row{
+    display:flex;
+    gap:8px;
+    margin-bottom:16px;
+  }
+  #typed-command{
+    flex:1;
+    background:var(--bg-0);
+    border:1px solid var(--line);
+    border-radius:3px;
+    color:var(--text);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    padding:10px 12px;
+    outline:none;
+  }
+  #typed-command:focus{border-color:var(--cyan);}
+  #send-btn,.launch-btn{
+    font-family:'Orbitron',sans-serif;
+    font-size:10px;
+    letter-spacing:1px;
+    background:transparent;
+    border:1px solid var(--cyan);
+    color:var(--cyan);
+    border-radius:3px;
+    padding:10px 14px;
+    cursor:pointer;
+    transition:background .15s ease,color .15s ease;
+  }
+  #send-btn:hover,.launch-btn:hover{background:rgba(0,210,255,0.12);}
+
+  .launch-row{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+    margin-bottom:18px;
+  }
+  .launch-btn{
+    font-size:9px;
+    padding:8px 4px;
+    text-align:center;
+    border-color:var(--line);
+    color:var(--text-dim);
+  }
+  .launch-btn:hover{border-color:var(--cyan);color:var(--cyan);}
+
+  #log{
+    height:150px;
+    overflow-y:auto;
+    background:var(--bg-0);
+    border:1px solid var(--line);
+    border-radius:3px;
+    padding:10px 12px;
+    font-size:11px;
+    line-height:1.6;
+    color:#5BC0BE;
+  }
+  #log div{opacity:0.92;}
+  #log div.jarvis{color:var(--cyan);}
+  #log::-webkit-scrollbar{width:6px;}
+  #log::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px;}
+
+  .footnote{
+    margin-top:14px;
+    font-size:9px;
+    letter-spacing:0.5px;
+    color:var(--text-dim);
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+
+<div class="console">
+  <div class="corner-tl"></div><div class="corner-br"></div>
+  <div class="eyebrow"><span>STARK-CLASS INTERFACE</span><span id="clock">14:18:32</span></div>
+  <h1>J.A.R.V.I.S.</h1>
+
+  <div id="status">MAIN CORE: ONLINE</div>
+
+  <div class="reactor-wrap">
+    <div class="reactor" id="reactor">
+      <svg viewBox="0 0 180 180" class="ring-outer">
+        <circle cx="90" cy="90" r="82" fill="none" stroke="#1C2E45" stroke-width="1.5"></circle>
+        <g stroke="#00D2FF" stroke-width="2" opacity="0.7">
+          <line x1="90" y1="4" x2="90" y2="20"></line>
+          <line x1="90" y1="160" x2="90" y2="176"></line>
+          <line x1="4" y1="90" x2="20" y2="90"></line>
+          <line x1="160" y1="90" x2="176" y2="90"></line>
+        </g>
+      </svg>
+      <svg viewBox="0 0 180 180" class="ring-inner">
+        <circle cx="90" cy="90" r="62" fill="none" stroke="#1C2E45" stroke-width="1" stroke-dasharray="4 6"></circle>
+      </svg>
+      <div class="core" id="core">TAP<br>CORE</div>
+    </div>
+  </div>
+
+  <div id="transcript">🎙️ Awaiting voice sequence activation...</div>
+
+  <div class="type-row">
+    <input id="typed-command" type="text" placeholder="...or type a command">
+    <button id="send-btn">SEND</button>
+  </div>
+
+  <div class="launch-row">
+    <button class="launch-btn" data-app="youtube">YouTube</button>
+    <button class="launch-btn" data-app="spotify">Spotify</button>
+    <button class="launch-btn" data-app="maps">Maps</button>
+    <button class="launch-btn" data-app="whatsapp">WhatsApp</button>
+    <button class="launch-btn" data-app="mail">Mail</button>
+    <button class="launch-btn" data-app="browser">Web Search</button>
+  </div>
+
+  <div id="log"><div>&gt;&gt;&gt; Jarvis OS initialization sequence complete.</div><div>&gt;&gt;&gt; Encryption pipelines safe.</div><div>&gt;&gt;&gt; Brain network provider: mistral</div><div class="jarvis">&gt;&gt;&gt; Jarvis: Systems fully operational, sir.</div></div>
+  <div class="footnote">VOICE ENGINE: WEB SPEECH API &nbsp;·&nbsp; BRAIN: OPENAI</div>
+</div>
+
+<script>
+/* =========================================================
+   CONFIG — PICK A PROVIDER, PASTE ITS KEY BELOW BETWEEN THE QUOTES
+   =========================================================
+   ⚠️ SECURITY WARNING — READ THIS BEFORE YOU PASTE A KEY:
+   This is a plain local HTML file. Anyone who opens it, views
+   its source (Ctrl+U), or receives a copy of this file can see
+   your key(s) in plain text. That is fine ONLY if:
+     - you never upload this file anywhere public (no GitHub,
+       no public web host, no shared drive), and
+     - you never send this file to anyone else.
+   If you ever want to host this on a real website for other
+   people to use, do NOT leave a key here — move the call to a
+   small backend/serverless function instead and have this page
+   call THAT, so the key never reaches the browser.
+   ========================================================= */
+
+// Change this one line to switch providers: "openai" | "groq" | "mistral" | "nvidia"
+const PROVIDER = "mistral";
+
+// Serper.dev free web search key (serper.dev — no card needed, 2,500 free searches/month)
+const SERPER_API_KEY = "560126ae7e2e410aa6ac38f93809803ae19ad204";
+
+const PROVIDERS = {
+  openai: {
+    url:   "https://api.openai.com/v1/chat/completions",
+    model: "gpt-4o-mini",
+    key:   "PASTE_YOUR_OPENAI_KEY_HERE"
+  },
+  groq: {
+    url:   "https://api.groq.com/openai/v1/chat/completions",
+    model: "llama-3.3-70b-versatile",
+    key:   "PASTE_YOUR_GROQ_KEY_HERE"
+  },
+  mistral: {
+    url:   "https://api.mistral.ai/v1/chat/completions",
+    model: "mistral-small-latest",
+    key:   "sMwXCP2jFy5RfGkZDrr4A0hpft57K7iO"
+  },
+  nvidia: {
+    url:   "https://integrate.api.nvidia.com/v1/chat/completions",
+    model: "meta/llama-3.1-70b-instruct",
+    key:   "PASTE_YOUR_NVIDIA_KEY_HERE"
+  }
+};
+
+const APP_REGISTRY = {
+  youtube:  "https://www.youtube.com",
+  spotify:  "https://open.spotify.com",
+  maps:     "https://maps.google.com",
+  whatsapp: "https://web.whatsapp.com",
+  mail:     "https://mail.google.com",
+  browser:  (q) => "https://www.google.com/search?q=" + encodeURIComponent(q || "")
+};
+
+const reactor    = document.getElementById('reactor');
+const core       = document.getElementById('core');
+const statusEl   = document.getElementById('status');
+const transcript = document.getElementById('transcript');
+const logEl      = document.getElementById('log');
+const clockEl    = document.getElementById('clock');
+const typedInput = document.getElementById('typed-command');
+const sendBtn    = document.getElementById('send-btn');
+
+setInterval(() => {
+  clockEl.textContent = new Date().toLocaleTimeString('en-US', {hour12:false});
+}, 1000);
+
+function postLog(text, fromJarvis=false){
+  const line = document.createElement('div');
+  if(fromJarvis) line.classList.add('jarvis');
+  line.textContent = ">>> " + text;
+  logEl.appendChild(line);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+postLog("Jarvis OS initialization sequence complete.");
+postLog("Encryption pipelines safe.");
+const ACTIVE = PROVIDERS[PROVIDER];
+if(!ACTIVE.key || ACTIVE.key.startsWith("PASTE_YOUR_")){
+  postLog("WARNING: No API key configured for provider '" + PROVIDER + "'. Edit the CONFIG block in this file.");
+} else {
+  postLog("Brain network provider: " + PROVIDER);
+}
+
+function vocalize(text){
+  postLog("Jarvis: " + text, true);
+  if(!('speechSynthesis' in window)) return;
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.rate = 1.0;
+  utter.pitch = 0.9;
+  const voices = speechSynthesis.getVoices();
+  const preferred = voices.find(v => /male|Daniel|Google UK English Male/i.test(v.name));
+  if(preferred) utter.voice = preferred;
+  speechSynthesis.speak(utter);
+}
+
+function setState(mode){
+  reactor.classList.remove('listening','processing');
+  if(mode === 'listening'){
+    reactor.classList.add('listening');
+    core.innerHTML = "LISTEN<br>ING";
+    statusEl.textContent = "CORE MODULE: CAPTURING AUDIO";
+    statusEl.style.color = "var(--crimson)";
+  } else if(mode === 'processing'){
+    reactor.classList.add('processing');
+    core.innerHTML = "ANALYZ<br>ING";
+    statusEl.textContent = "CORE MODULE: ANALYZING INTENT";
+    statusEl.style.color = "var(--amber)";
+  } else {
+    core.innerHTML = "TAP<br>CORE";
+    statusEl.textContent = "MAIN CORE: ONLINE";
+    statusEl.style.color = "var(--cyan)";
+  }
+}
+
+function routeLocalApp(appName, rawQuery){
+  const key = Object.keys(APP_REGISTRY).find(k => appName.includes(k));
+  if(!key){
+    vocalize("Application registry match not found for " + appName + ", sir.");
+    return;
+  }
+  const target = APP_REGISTRY[key];
+  const url = typeof target === 'function' ? target(rawQuery) : target;
+  vocalize("Opening " + key + ", sir.");
+  window.open(url, '_blank');
+  postLog("Launched " + key + " -> " + url);
+}
+document.querySelectorAll('.launch-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=> routeLocalApp(btn.dataset.app, ''));
+});
+
+async function getLiveWeather(){
+  try{
+    const res = await fetch("https://wttr.in/?format=%C+%t");
+    const text = await res.text();
+    vocalize("Current conditions, sir: " + text.trim());
+  }catch(e){
+    vocalize("I could not reach the weather service, sir.");
+  }
+}
+
+async function performWebSearch(query){
+  const res = await fetch("https://google.serper.dev/search", {
+    method: "POST",
+    headers: {
+      "X-API-KEY": SERPER_API_KEY,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ q: query })
+  });
+  const data = await res.json();
+  const results = (data.organic || []).slice(0, 4);
+  return results.map(r => "- " + r.title + ": " + r.snippet).join("\n");
+}
+
+async function queryBrainNetwork(query){
+  if(!ACTIVE.key || ACTIVE.key.startsWith("PASTE_YOUR_")){
+    vocalize("No API key is configured, sir. I cannot reach the brain network.");
+    return;
+  }
+
+  let searchContext = "";
+  if(SERPER_API_KEY && !SERPER_API_KEY.startsWith("PASTE_YOUR_")){
+    try{
+      postLog("Querying live web index...");
+      searchContext = await performWebSearch(query);
+    }catch(e){
+      postLog("Search fetch failed: " + e.message);
+    }
+  }
+
+  const systemPrompt = "You are J.A.R.V.I.S., the advanced, polite, loyal AI assistant from Iron Man. Keep replies brief and conversational. Address the user as sir. The current real-world date and time is " + new Date().toString() + "."
+    + (searchContext ? " Here are live web search results relevant to the question:\n" + searchContext + "\nUse them to answer accurately." : "");
+
+  try{
+    const res = await fetch(ACTIVE.url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + ACTIVE.key
+      },
+      body: JSON.stringify({
+        model: ACTIVE.model,
+        messages: [
+          { role:"system", content: systemPrompt },
+          { role:"user", content: query }
+        ]
+      })
+    });
+    if(!res.ok){
+      const errText = await res.text();
+      postLog("API error " + res.status + ": " + errText);
+      vocalize("Network configurations rejected transmission streams, sir.");
+      return;
+    }
+    const data = await res.json();
+    const reply = data.choices[0].message.content;
+    vocalize(reply);
+  }catch(e){
+    postLog("Network exception: " + e.message);
+    vocalize("Mainframe communications linkage fault, sir.");
+  }
+}
+
+async function processCommand(command){
+  command = command.toLowerCase().trim();
+  postLog("Input resolved: '" + command + "'");
+  if(!command){
+    vocalize("I didn't catch that, sir.");
+  } else if(command.includes("open")){
+    const target = command.split("open").pop().trim();
+    routeLocalApp(target, target);
+  } else if(command.includes("weather")){
+    await getLiveWeather();
+  } else {
+    await queryBrainNetwork(command);
+  }
+  setState('idle');
+}
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognizer = null;
+let isListening = false;
+
+if(SpeechRecognition){
+  recognizer = new SpeechRecognition();
+  recognizer.continuous = false;
+  recognizer.interimResults = true;
+  recognizer.lang = 'en-US';
+
+  recognizer.onresult = (e) => {
+    let text = "";
+    for(let i=0;i<e.results.length;i++) text += e.results[i][0].transcript;
+    transcript.textContent = '🎙️ "' + text + '"';
+  };
+  recognizer.onerror = (e) => postLog("Hardware fault: " + e.error);
+  recognizer.onend = async () => {
+    isListening = false;
+    const text = transcript.textContent.replace(/🎙️ "|"$/g, '');
+    if(text && !text.includes('Awaiting')){
+      setState('processing');
+      await processCommand(text);
+    } else {
+      setState('idle');
+    }
+  };
+} else {
+  postLog("Speech recognition not supported in this browser. Use the text field instead.");
+}
+
+reactor.addEventListener('click', () => {
+  if(!recognizer){
+    typedInput.focus();
+    return;
+  }
+  if(!isListening){
+    isListening = true;
+    transcript.textContent = '🎙️ "..."';
+    setState('listening');
+    try{ recognizer.start(); }catch(e){ postLog("Recognizer busy: " + e.message); }
+  } else {
+    recognizer.stop();
+  }
+});
+
+async function submitTyped(){
+  const val = typedInput.value.trim();
+  if(!val) return;
+  transcript.textContent = '🎙️ "' + val + '"';
+  typedInput.value = '';
+  setState('processing');
+  await processCommand(val);
+}
+sendBtn.addEventListener('click', submitTyped);
+typedInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') submitTyped(); });
+
+vocalize("Systems fully operational, sir.");
+</script>
+
+</body></html>
